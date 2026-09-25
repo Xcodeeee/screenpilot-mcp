@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: screenpilot-mcp
+  ai:
+    mcp:
+      server:
+        name: screenpilot-mcp
+        version: 0.0.1
+        stdio: true
+        instructions: ScreenPilot MCP 让大模型能够看到并操作桌面。所有涉及坐标的工具，x, y 都直接填你在 capture_screen 返回图片中看到的像素坐标，工具会自动换算成真实屏幕坐标。建议每次操作后再截图确认结果。
+  main:
+    web-application-type: none
+    banner-mode: off
+
+screenpilot:
+  capture:
+    target-width: 1280
