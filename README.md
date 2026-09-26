@@ -57,26 +57,33 @@ ScreenPilot MCP 是一个基于 [Model Context Protocol](https://modelcontextpro
 
 ScreenPilot MCP 通过 **STDIO** 传输，由 MCP 客户端作为子进程启动。
 
+启动方式有两种（需要MCP客户端启动）：
 
+- **npx**：通过 npm 安装，无需 Java 环境，已将 JRE 打包进可执行程序中
+- **java**：需要自行克隆源码编译，并安装 Java 21+
+
+### 接入方式：
 
 ### 一、JSON 配置方式
 
 适用于 Claude Desktop、Cursor 等需要编辑配置文件的客户端。
 
-#### npx 启动（尚未发布）
+#### npx 启动（推荐，无需 Java 环境）
 
 ```json
 {
   "mcpServers": {
     "screenpilot": {
       "command": "npx",
-      "args": ["screenpilot-mcp"]
+      "args": ["-y", "screenpilot-mcp"]
     }
   }
 }
 ```
 
-#### java 启动（需要Java21+环境）
+> `-y` 用于自动确认安装，避免客户端因交互提示卡住。
+
+#### java 启动（需要 Java 21+ 环境）
 
 克隆源码构建：
 
@@ -110,21 +117,22 @@ mvn clean package -DskipTests
 
 适用于提供"添加 MCP 服务器"表单的客户端。在界面中填写以下字段：
 
-#### npx 启动（尚未发布）
+#### npx 启动（推荐，无需 Java 环境）
 
 | 字段 | 值 |
 |------|-----|
 | 名称 | `screenpilot`（任意） |
 | 传输方式 | `STDIO` |
 | 命令 | `npx` |
-| 参数 | `screenpilot-mcp` |
+| 参数 | `-y screenpilot-mcp` |
 
-#### java 启动（需要Java21+环境）
+
+#### java 启动（需要 Java 21+ 环境）
 
 克隆源码构建：
 
 ```bash
-git clone https://github.com/你的用户名/screenpilot-mcp.git
+git clone https://github.com/Xcodeeee/screenpilot-mcp.git
 cd screenpilot-mcp
 mvn clean package -DskipTests
 ```
