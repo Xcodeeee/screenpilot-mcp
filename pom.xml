@@ -56,6 +56,18 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>io.github.lxw112190</groupId>
+            <artifactId>lw-ppocr-core</artifactId>
+            <version>0.2.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.lxw112190</groupId>
+            <artifactId>lw-ppocr-imageio</artifactId>
+            <version>0.2.1</version>
+        </dependency>
     </dependencies>
 
     <build>
