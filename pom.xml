@@ -21,6 +21,16 @@
         <spring-ai.version>2.0.0</spring-ai.version>
     </properties>
 
+    <!-- 把 libs/ 当作本地 Maven 仓库 -->
+    <repositories>
+        <repository>
+            <id>local-libs</id>
+            <url>file://${project.basedir}/libs</url>
+            <releases><enabled>true</enabled></releases>
+            <snapshots><enabled>false</enabled></snapshots>
+        </repository>
+    </repositories>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -57,6 +67,7 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- lw.PPOCR.Java：从 libs/ 本地仓库解析，标准 compile scope -->
         <dependency>
             <groupId>io.github.lxw112190</groupId>
             <artifactId>lw-ppocr-core</artifactId>
@@ -76,6 +87,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -83,9 +95,7 @@
                     <execution>
                         <id>default-compile</id>
                         <phase>compile</phase>
-                        <goals>
-                            <goal>compile</goal>
-                        </goals>
+                        <goals><goal>compile</goal></goals>
                         <configuration>
                             <annotationProcessorPaths>
                                 <path>
@@ -98,9 +108,7 @@
                     <execution>
                         <id>default-testCompile</id>
                         <phase>test-compile</phase>
-                        <goals>
-                            <goal>testCompile</goal>
-                        </goals>
+                        <goals><goal>testCompile</goal></goals>
                         <configuration>
                             <annotationProcessorPaths>
                                 <path>
@@ -114,5 +122,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>
