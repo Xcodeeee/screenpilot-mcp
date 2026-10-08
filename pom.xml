@@ -67,7 +67,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- lw.PPOCR.Java：从 libs/ 本地仓库解析，标准 compile scope -->
+        <!-- lw.PPOCR.Java：从 libs/ 本地仓库解析 -->
         <dependency>
             <groupId>io.github.lxw112190</groupId>
             <artifactId>lw-ppocr-core</artifactId>

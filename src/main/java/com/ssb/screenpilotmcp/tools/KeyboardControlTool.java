@@ -38,10 +38,14 @@ public class KeyboardControlTool {
 
     @McpTool(name = "type_text",
             description = """
-             在当前获得焦点的地方输入文本（支持中文、emoji 等 Unicode 字符）。
-             使用前请先用 click_at 点击目标输入框，确保光标在其中。
-             实现方式是写入系统剪贴板后模拟粘贴，会覆盖用户原有剪贴板内容。
-             """)
+            在当前获得焦点的输入框中插入文本（支持中文、emoji 等 Unicode 字符）。
+
+            行为说明：
+            1. 文本会插入到当前光标位置，不会清除原有内容。
+            2. 若要替换原有内容，先发送 ctrl+a（macOS 为 cmd+a）全选，再调用本工具。
+            3. 使用前先用 click_at 点击目标输入框，确保光标已落在其中。
+            4. 实现方式是写入系统剪贴板后模拟粘贴，会覆盖用户原有剪贴板内容。
+            """)
     public String typeText(
             @McpToolParam(description = "要输入的文本", required = true) String text) {
         try {
@@ -65,11 +69,14 @@ public class KeyboardControlTool {
 
     @McpTool(name = "key_press",
             description = """
-             模拟按下单个按键或组合键。
-             单键：key="enter"、"tab"、"esc"、"up"、"down" 等。
-             组合键：用 "+" 连接，如 "ctrl+c"、"ctrl+v"、"cmd+a"
-             （macOS 用 cmd，Windows/Linux 用 ctrl）。
-             """)
+            模拟按下单个按键或组合键。
+
+            用法：
+            1. 单键：key 传 "enter"、"tab"、"esc"、"up"、"down"、"pageup" 等。
+            2. 组合键：用 "+" 连接，如 "ctrl+c"、"ctrl+v"、"cmd+a"。
+               注意 macOS 用 cmd，Windows / Linux 用 ctrl。
+            3. 如需重复按键（如按 3 次 down），请多次调用本工具，不要在一次调用里塞重复。
+            """)
     public String keyPress(
             @McpToolParam(description = "按键或组合键，如 enter / ctrl+c", required = true) String key) {
         try {
