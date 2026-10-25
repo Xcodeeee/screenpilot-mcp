@@ -1,0 +1,22 @@
+{
+  "name": "screenpilot-fast",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "ScreenPilot 的 Node 旁路实现：GDI 截屏 + SendInput，无 OCR",
+  "bin": {
+    "screenpilot-fast": "server.mjs"
+  },
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "koffi": "^3.3.4"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "os": [
+    "win32"
+  ]
+}
