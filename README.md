@@ -2,74 +2,72 @@
 
 > 让大模型拥有眼睛和手，直接操控你的桌面。
 
-ScreenPilot MCP 是一个基于 [Model Context Protocol](https://modelcontextprotocol.io/) 的桌面自动化服务。接入支持 MCP 的客户端后，AI 可以**截取屏幕、识别文字、点击、输入、滚动、拖拽**，实现"AI 自主操作电脑"。
+ScreenPilot MCP 是一个基于 [Model Context Protocol（MCP）](https://modelcontextprotocol.io/) 的桌面自动化服务。接入支持 MCP 的客户端后，AI 可以截取屏幕、识别文字、点击、输入、滚动和拖拽。
 
-**技术栈**：Java 21 + Spring Boot 4 + Spring AI 2.0（MCP Server）+ `java.awt.Robot`
+**技术栈：** Java 21、Spring Boot 4、Spring AI 2.0（MCP Server）、`java.awt.Robot`
 
----
+## 目录
 
-## ⚠️ 重要安全提醒（请务必阅读）
+- [项目简介](#项目简介)
+- [功能一览](#功能一览)
+- [平台支持](#平台支持)
+- [安装与配置](#安装与配置)
+- [系统权限](#系统权限)
+- [验证是否接入成功](#验证是否接入成功)
+- [开发与贡献](#开发与贡献)
+- [OCR 说明](#ocr-说明)
+- [路线图](#路线图)
+- [安全说明](#安全说明)
+- [致谢](#致谢)
 
-**本项目正在开发安全审计机制，但当前版本尚未启用。**
+## 项目简介
 
-这意味着：
+ScreenPilot MCP 通过 **STDIO** 传输，由 MCP 客户端作为子进程启动。提供屏幕截图、OCR 识别和鼠标键盘控制工具，适用于需要桌面交互能力的 MCP 工作流。
 
-- AI 每次调用 `capture_screen` 时，**你的整个屏幕内容（包括密码框、私人聊天、邮件、银行页面等）都会被截图并发送给大模型**
-- AI 可以调用 `click_at`、`type_text` 等工具，**在你的电脑上执行任意鼠标和键盘操作**
-- 当前版本**没有任何权限确认、操作拦截、敏感信息过滤或行为日志**
+### 重要安全提醒
 
-**请不要在含有敏感信息的电脑上使用本项目。请自行评估风险。**
+**当前版本尚未启用安全审计机制。** 屏幕截图可能包含密码、私人聊天、邮件、银行页面等敏感信息；鼠标和键盘工具也可能执行高风险操作。当前版本没有操作前权限确认、操作拦截、敏感信息过滤或行为日志。
 
-我们开源出来，是希望社区一起探讨安全审计的设计方案。当前**没有任何安全保证**，请谨慎使用。
+请勿在包含敏感信息或重要账户的环境中使用，除非你已充分评估并接受相关风险。详细说明请阅读[安全说明](docs/SECURITY.md)。
 
----
+## 功能一览
 
-## ✨ 功能
+项目提供以下 8 个 MCP 工具：
 
-共 8 个工具：
-
-| 工具 | 说明 |
-|------|------|
-| `capture_screen` | 截取全屏幕，返回 PNG 图片 + OCR 识别结果（文字 + 坐标） |
-| `click_at` | 左键单击 |
-| `double_click_at` | 左键双击 |
-| `right_click_at` | 右键单击 |
-| `scroll_at` | 向上/向下滚动 |
+| 工具 | 功能 |
+| --- | --- |
+| `capture_screen` | 截取全屏，返回 PNG 图片和 OCR 识别结果（文字及坐标） |
+| `click_at` | 鼠标左键单击 |
+| `double_click_at` | 鼠标左键双击 |
+| `right_click_at` | 鼠标右键单击 |
+| `scroll_at` | 向上或向下滚动 |
 | `drag` | 从起点拖拽到终点 |
-| `type_text` | 输入文本（支持中文、emoji） |
-| `key_press` | 按键或组合键（如 `ctrl+c`） |
+| `type_text` | 输入文本，支持中文和 emoji |
+| `key_press` | 按键或组合键，例如 `ctrl+c` |
 
----
+## 平台支持
 
-## 🖥️ 平台支持
+| 平台 | 当前状态 | 说明 |
+| --- | --- | --- |
+| macOS | 已测试 | 需要配置屏幕录制、辅助功能和输入监控权限 |
+| Windows | 已测试 | 某些系统级窗口可能受权限或焦点切换影响 |
+| Linux（X11） | 未测试 | 项目仍需实际验证 |
+| Linux（Wayland） | 不支持 | 当前实现使用的 `java.awt.Robot` 无法在 Wayland 会话中正常截屏 |
 
-| 平台 | 状态 |
-|------|------|
-| **macOS** | ✅ 已测试通过 |
-| **Windows** | ✅ 已测试通过 |
-| **Linux (X11)** | 未测试 |
-| **Linux (Wayland)** | ❌ 不支持，`java.awt.Robot` 无法在 Wayland 下截屏 |
+## 安装与配置
 
----
+有两种启动方式：
 
-## 🚀 使用方式
+- **npx：** 推荐给希望直接使用 npm 包的用户；无需单独安装 Java。npm 包可能滞后于 GitHub 源码。
+- **源码构建：** 需要 Git、Maven Wrapper 和 Java 21 或更高版本，适合尝试最新源码。
 
-ScreenPilot MCP 通过 **STDIO** 传输，由 MCP 客户端作为子进程启动。
+### 方式一：JSON 配置
 
-启动方式有两种（需要 MCP 客户端启动）：
+适用于 Claude Desktop、Cursor 等允许编辑 MCP 配置文件的客户端。
 
-- **npx**：通过 npm 安装，无需 Java 环境，已将 JRE 打包进可执行程序中
-- **java**：需要自行克隆源码编译，并安装 Java 21+
+**npx 启动（推荐）**
 
-> ⚠️ **npm 包更新较缓**。由于模型蒸馏和 OCR 优化工作仍在进行中，npm 上的版本可能滞后于 GitHub 源码。想体验最新特性请使用源码构建方式。
-
-### 接入方式
-
-#### 一、JSON 配置方式
-
-适用于 Claude Desktop、Cursor 等需要编辑配置文件的客户端。
-
-**npx 启动（推荐，无需 Java 环境）**
+将以下配置合并到客户端的 MCP 配置中：
 
 ```json
 {
@@ -82,19 +80,25 @@ ScreenPilot MCP 通过 **STDIO** 传输，由 MCP 客户端作为子进程启动
 }
 ```
 
-> `-y` 用于自动确认安装，避免客户端因交互提示卡住。
+参数 `-y` 用于自动确认安装，避免客户端因交互提示而卡住。
 
-**java 启动（需要 Java 21+ 环境）**
+**源码构建并使用 Java 启动**
 
-克隆源码构建：
+在终端执行：
 
 ```bash
 git clone https://github.com/Xcodeeee/screenpilot-mcp.git
 cd screenpilot-mcp
-mvn clean package -DskipTests
+./mvnw clean package -DskipTests
 ```
 
-构建成功后在 `target/` 下生成 `screenpilot-mcp-0.0.1-SNAPSHOT.jar`，然后：
+Windows 可使用：
+
+```powershell
+.\mvnw.cmd clean package -DskipTests
+```
+
+构建成功后，在 `target/` 目录中找到生成的 JAR 文件，再将 MCP 配置为：
 
 ```json
 {
@@ -103,79 +107,39 @@ mvn clean package -DskipTests
       "command": "java",
       "args": [
         "-jar",
-        "/绝对路径/screenpilot-mcp-0.0.1-SNAPSHOT.jar"
+        "/absolute/path/to/screenpilot-mcp-0.0.1-SNAPSHOT.jar"
       ]
     }
   }
 }
 ```
 
-⚠️ 路径必须是**绝对路径**，Windows 上用双反斜杠 `\\` 或正斜杠 `/`。
+请将示例路径替换为 JAR 文件的**实际绝对路径**。Windows 路径可使用双反斜杠或正斜杠。
 
-#### 二、可视化界面方式
+### 方式二：客户端可视化配置
 
-适用于提供"添加 MCP 服务器"表单的客户端。在界面中填写以下字段：
+如果客户端提供“添加 MCP 服务器”表单，请填写：
 
-**npx 启动（推荐，无需 Java 环境）**
+| 字段 | npx 启动 | Java 启动 |
+| --- | --- | --- |
+| 名称 | `screenpilot`（可自定义） | `screenpilot`（可自定义） |
+| 传输方式 | `STDIO` | `STDIO` |
+| 命令 | `npx` | `java` |
+| 参数 | `-y screenpilot-mcp` | `-jar /绝对路径/项目.jar` |
 
-| 字段 | 值 |
-|------|-----|
-| 名称 | `screenpilot`（任意） |
-| 传输方式 | `STDIO` |
-| 命令 | `npx` |
-| 参数 | `-y screenpilot-mcp` |
+## 系统权限
 
-**java 启动（需要 Java 21+ 环境）**
+### macOS
 
-| 字段 | 值 |
-|------|-----|
-| 名称 | `screenpilot`（任意） |
-| 传输方式 | `STDIO` |
-| 命令 | `java` |
-| 参数 | `-jar /绝对路径/screenpilot-mcp-0.0.1-SNAPSHOT.jar` |
+macOS 需要为**启动 MCP 的客户端**开启以下三项权限，而不是只给 IDE 或 Java 授权：
 
-### 验证
+1. **屏幕录制：** 系统设置 → 隐私与安全性 → 屏幕录制。用于 `capture_screen`。
+2. **辅助功能：** 系统设置 → 隐私与安全性 → 辅助功能。用于鼠标和键盘控制，例如 `click_at`、`drag`、`type_text`。
+3. **输入监控：** 系统设置 → 隐私与安全性 → 输入监控。用于 `key_press` 模拟按键。
 
-配置完成后**彻底退出并重启客户端**（macOS 按 `Cmd + Q`，不是关窗口），在对话框输入：
+如果权限已开启但截图仍为黑屏，请彻底退出客户端（例如按 `Cmd + Q`）后重新启动，并再次检查系统权限。系统更新后权限可能需要重新确认。
 
-> 截取当前屏幕，告诉我屏幕上有什么。
-
-若 AI 成功调用 `capture_screen` 并描述画面，即接入成功。
-
----
-
-## 🔐 平台权限
-
-### macOS（必须配置）
-
-macOS 对屏幕操作有严格的权限管控。ScreenPilot 涉及**截屏**和**模拟鼠标键盘**两类操作，需要以下**三项权限**全部开启：
-
-**1. 屏幕录制（Screen Recording）**
-
-用于 `capture_screen` 截取屏幕画面。
-
-- 打开 **系统设置 → 隐私与安全性 → 屏幕录制**
-- 勾选你用来运行 MCP 的**客户端**
-
-**2. 辅助功能（Accessibility）**
-
-用于 `click_at`、`drag`、`type_text` 等鼠标和键盘操作。macOS 10.15 起，`java.awt.Robot` 默认不被允许控制 Mac，必须手动授权。
-
-- 打开 **系统设置 → 隐私与安全性 → 辅助功能**
-- 勾选你用来运行 MCP 的**客户端**
-
-**3. 输入监控（Input Monitoring）**
-
-用于 `key_press` 模拟按键输入。
-
-- 打开 **系统设置 → 隐私与安全性 → 输入监控**
-- 勾选你用来运行 MCP 的**客户端**
-
-**关键说明**：
-
-- 以上三项权限都是**给启动 MCP 的客户端授权**，不是给 IDEA 或 Java。macOS 的权限是授予启动进程的父进程的。
-- 如果权限已勾选但截图仍返回黑屏，尝试**彻底退出客户端**（`Cmd + Q`）后重新打开。macOS 更新有时会重置权限，需重新检查。
-- 重置所有相关权限：
+如需重置相关 TCC 权限，可在终端执行以下命令；执行前请确认你理解其影响：
 
 ```bash
 tccutil reset ScreenCapture
@@ -184,107 +148,70 @@ tccutil reset Accessibility
 
 ### Windows
 
-Windows 通常不需要额外授权即可截屏和模拟输入。但有以下注意事项：
+通常无需额外配置即可截屏和模拟输入，但请注意：
 
-- **UAC 提权窗口无法截图**：当 Windows 弹出 UAC（用户账户控制）提示时，系统会锁定桌面，任何程序都无法截取该画面。
-- **部分系统级界面需要管理员权限**：如果需要操作以管理员身份运行的窗口，建议以管理员身份启动 MCP 客户端。
-- **焦点切换延迟**：Windows 在切换焦点窗口时有延迟，可能导致自动化操作失败。可通过修改注册表 `HKEY_CURRENT_USER\Control Panel\Desktop\ForegroundLockTimeout` 的值为 `0` 来禁用延迟。
+- **UAC 安全桌面：** 用户账户控制提权提示期间，普通桌面程序通常无法截取该安全桌面。
+- **管理员窗口：** 若目标应用以管理员身份运行，权限级别差异可能导致控制失败。
+- **焦点切换：** 切换窗口时的系统延迟可能影响自动化操作。不要为了绕过安全边界而随意更改系统设置。
 
 ### Linux
 
-- **X11 桌面环境**（如 Ubuntu 20.04、CentOS）：开箱即用
-- **Wayland 桌面环境**（Ubuntu 22.04+、Fedora 默认）：`java.awt.Robot` 无法工作，截图会返回黑屏。建议在登录界面切换到 **X11 会话**
+- **X11：** 当前尚未完成项目级测试，使用前请自行验证。
+- **Wayland：** 当前实现不支持；在 Wayland 会话下可能出现黑屏或无法操作。切换 X11 会话只是可能的临时规避方式，不代表项目已正式支持 Linux。
 
----
+## 验证是否接入成功
 
-## 🗺️ 未来计划
+1. 保存 MCP 配置。
+2. **彻底退出并重新启动客户端**，使配置生效。
+3. 在客户端中请求：“截取当前屏幕，告诉我屏幕上有什么。”
+4. 如果客户端成功调用 `capture_screen` 并返回画面描述，说明基本接入成功。
 
-按优先级排列：
+测试前请关闭含敏感信息的窗口，并确认你理解屏幕截图和输入控制带来的风险。
 
-- [ ] **安全审计机制上线**（最重要，进行中）
-- [ ] **OCR 性能优化**（进行中）
-- [ ] **Linux X11 测试与适配**
-- [ ] **Wayland 支持**（通过 D-Bus portal，工作量大）
-- [ ] **多显示器支持**（当前只截主屏）
-- [ ] **`get_selected_text`**（读取焦点窗口选中的文本）
-- [ ] **截图区域裁剪**（只截指定区域，降低隐私风险）
-- [ ] **Windows / macOS / Linux CI 构建矩阵**
+## 开发与贡献
 
----
+欢迎通过 Issue 和 Pull Request 参与改进。
 
-## 🛠️ 开发与贡献
+提交代码前请检查：
 
-欢迎提交 Issue 和 Pull Request。
+- 使用 Java 21 或更高版本，并尽可能执行 `./mvnw clean package`（Windows 使用 `mvnw.cmd`）。
+- 新增 MCP 工具遵循项目使用的 `@McpTool` 注解规范。
+- 涉及屏幕坐标的工具必须使用 `CoordinateUtil`，不要自行重复实现坐标换算。
+- 使用 SLF4J 记录日志；不要使用 `System.out.println` 输出普通日志，因为 STDIO 模式下标准输出用于 MCP 协议通信。
+- 新增依赖时注意 npm 分发包的体积目标（含 JRE 小于 100 MB）；变更后应重新核验实际产物大小。
 
-**提交前请确认**：
+## OCR 说明
 
-- 代码通过 `mvn clean package` 构建
-- 新加的工具遵循 `@McpTool` 注解规范
-- 涉及坐标的工具必须使用 `CoordinateUtil` 换算，禁止自行实现
-- 日志使用 SLF4J，禁止 `System.out.println`（STDIO 模式下 stdout 是 MCP 协议专用通道）
-- 新增依赖时确认最终 npm 包体积（含 JRE）**小于 100MB**
+OCR 能力由 [lw.PPOCR.Java](https://github.com/lxw112190/lw.PPOCR.Java) 提供，这是一个纯 Java 的 PP-OCR 推理引擎。项目使用转换为 LWM 格式的 PP-OCRv6 Tiny 模型。
 
----
+选择纯 Java 实现的原因是需要将 JRE 和依赖一起打包进 npm 分发包，并将总体积控制在 100 MB 以内；与依赖 ONNX Runtime、OpenCV 原生库的方案相比，这有助于减少原生库带来的体积负担。
 
-## 📦 关于 OCR
+**已知限制：** 当前 OCR 识别速度仍在优化中。
 
-项目的 OCR 功能完全由 **[lw.PPOCR.Java](https://github.com/lxw112190/lw.PPOCR.Java)** 提供支持——一个纯 Java 实现的 PP-OCR 推理引擎，由 [@lxw112190](https://github.com/lxw112190) 开发。
+## 路线图
 
-- **推理引擎**：[lw.PPOCR.Java](https://github.com/lxw112190/lw.PPOCR.Java)（纯 Java，无 Native 依赖）
-- **OCR 模型**：[PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR) 出品的 PP-OCRv6 Tiny，转换为 LWM 格式
+以下项目反映 README 最近一次整理时记录的计划状态，实际进度可能变化：
 
-**为什么选它**：本项目需要将一个完整的 JRE + 全部依赖打包进 npm 包，硬性限制是 **100MB**。传统的 OCR 方案（ONNX Runtime + OpenCV Native）打包后超过 200MB，无法满足要求。lw.PPOCR.Java 用纯 Java 实现了 PP-OCRv6 的推理链路，彻底摆脱了 Native 库依赖，使体积目标得以实现。
+- [ ] 上线安全审计机制（最高优先级，开发中）
+- [ ] 优化 OCR 性能
+- [ ] 完成 Linux X11 测试与适配
+- [ ] 通过 D-Bus portal 等方案探索 Wayland 支持
+- [ ] 支持多显示器（当前仅截取主屏）
+- [ ] 增加 `get_selected_text`（读取焦点窗口选中文本）
+- [ ] 增加截图区域裁剪，降低不必要的隐私暴露
+- [ ] 建立 Windows、macOS、Linux 的 CI 构建矩阵
 
-> ⚠️ 当前 OCR 识别速度较慢，正在优化中，后续版本会持续改善。
+## 安全说明
 
----
+安全审计的设计目标、风险分类、模型方案和当前进度已单独整理到[安全说明文档](docs/SECURITY.md)。**该审计机制尚未集成到当前版本；文档中的设计不能视为已经实现的保护措施。**
 
-## 🛡️ 安全审计设计（开发中）
-
-当前的 ScreenPilot 没有任何安全约束，这是最需要解决的问题。我们正在设计并实现一套**基于小模型的实时审计机制**。
-
-### 设计目标
-
-- 在**不牺牲响应速度**的前提下，对 AI 的每一次操作意图进行风险判定
-- 覆盖三类风险：**隐私泄露**、**高危操作**（删除、支付、执行命令等）、**异常行为**
-- 全程**本地运行**，不引入任何外部依赖
-
-### 技术路线：知识蒸馏
-
-采用**教师-学生**蒸馏方案，用大模型作为教师，蒸馏一个可嵌入式部署的小模型作为学生：
-
-| 角色 | 模型 | 用途 |
-|------|------|------|
-| **教师模型** | **Qwen** 系列大模型 | 对大量"操作意图 + OCR 上下文"样本进行标注，输出风险标签 |
-| **学生模型** | **TinyBERT-4L-zh**（INT8 量化后约 15MB） | 学习教师模型的判定逻辑，压缩到可嵌入式部署的体量 |
-
-学生模型是一个**三分类模型**：
-
-- **安全（Safe）**：操作无明显风险，放行
-- **可疑（Suspicious）**：需要提醒用户或二次确认
-- **危险（Dangerous）**：直接拦截，返回拒绝执行
-
-### 当前进度
-
-- [x] 方案设计
-- [x] 教师模型选型（Qwen）
-- [x] 学生模型选型（TinyBERT-4L-zh）
-- [ ] 训练数据构造
-- [ ] 蒸馏与量化
-- [ ] 集成到 MCP 服务端
-- [ ] 用户确认交互设计
-
-> 审计模型仍在训练中，**当前版本尚未包含任何审计逻辑**，请务必谨慎使用。
-
----
-
-## 🙏 致谢
+## 致谢
 
 - [Model Context Protocol](https://modelcontextprotocol.io/)
 - [Spring AI](https://spring.io/projects/spring-ai)
-- [lw.PPOCR.Java](https://github.com/lxw112190/lw.PPOCR.Java) — 纯 Java 实现的 PP-OCR 推理引擎，本项目能在 100MB 内跑通 OCR 全靠它
-- [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR) — PP-OCRv6 模型的原始出处
+- [lw.PPOCR.Java](https://github.com/lxw112190/lw.PPOCR.Java) — 纯 Java PP-OCR 推理引擎
+- [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR) — PP-OCR 模型项目
 
 ---
 
-**⭐ 如果这个项目对你有帮助，欢迎 Star。**
+如果这个项目对你有帮助，欢迎在 GitHub 上 Star。
