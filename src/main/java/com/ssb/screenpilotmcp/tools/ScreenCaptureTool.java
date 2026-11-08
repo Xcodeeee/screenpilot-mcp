@@ -84,6 +84,7 @@ public class ScreenCaptureTool {
                 // OCR 识别图像
                 ocrItems = screenOcrUtil.recognize(resized);
             } catch (Exception e) {
+                // OCR 失败时仍返回截图，识别结果使用空列表。
                 ocrItems = List.of();
             }
 
